@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "terrparty"
+
+Dir.entries(".").select{|f| f =~ /.*\.tf\.rb/}.each do |f|
+  builder = Terrparty::Builder.new(File.expand_path(f)) do
+    eval(File.read(f))
+  end
+  File.write(f.gsub(/rb$/, "json"), builder.to_json)
+  File.write(f.gsub(/\.tf\.rb$/, ".auto.tfvars.json"), builder.vars_to_json)
+end
+
+if ARGV.first == "push"
+  exec 'sh -c "git commit -a && git push"'
+elsif ARGV.first != "generate"
+  exec "terraform", *ARGV
+end
